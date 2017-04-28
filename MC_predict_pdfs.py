@@ -17,29 +17,67 @@ from matplotlib.font_manager import FontProperties
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def create_pdfs(events_frac, kernel_alg = 'sklearn', plot = 1, save_pdfs = 1):
+def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
+                ranges = [-150, 150, -250, 250], nbins = [50j, 100j],\
+                ew = 2, nw = 0.5):
+
+    """
+    Create the PDFs the probability for the
+    Chen geoeffective magnetic cloud prediction Bayesian formulation. 
+    
+    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
+    
+    where
+    
+    Bzm = actual value of Bz max for a magnetic cloud
+    tau = actual duation of a magnetic cloud
+    Bzm' = fitted/estimated value of Bz max at fraction (f) of an event
+    tau' = fitted/estimated value of duration at fraction (f) of an event
+    e = geoeffective event
+    n = nongeoeffective event
+    f = fraction of an event
+       
+    inputs:
+        
+    events_frac = dataframe
+        contains output variables from a fit to solar wind magnetic field data
+    kernel_alg = string
+        choose between scikit learn and scipy stats python KDE algorithms
+    ranges = 4 element array 
+        defines the axis ranges for Bzm and tau [bmin, bmax, tmin, tmax]
+    nbins = 2 elements array 
+        defines the number of bins along bzm and tau [nbins_Bzm, nbins_tau]
+    ew = float
+        defines the kernel smoothing width for the geoeffective events
+    nw = float
+        defines the kernel smoothing width for the nongeoeffective events    
+       
+    
+    """ 
     
     #width of smoothing box
-    ew = 2
-    nw = 0.5
+    #ew = 2
+    #nw = 0.5
     
     
     #range of Bzm and tau to define PDFs 
     #note - tmin is negative due to requirement to reflect raw data points in 
     #the tau = 0 axis to combat boundary effects when implementing kernel density
     #estimate smoothing
-    bmin = -150
-    bmax = 150
-    tmin = -250
-    tmax = 250
+    #bmin = -150
+    #bmax = 150
+    #tmin = -250
+    #tmax = 250
     
-    ranges = [bmin, bmax, tmin, tmax]
+    #ranges = [bmin, bmax, tmin, tmax]
     
     #number of data bins in each dimension (dt takes into account the reflection)
-    db = 50j
-    dt = 100j
+    #db = 5j
+    #dt = 10j
     
-    nbins = [db, dt]
+    #nbins = [db, dt]
+    
     
     #create input PDFS
     Pe = P_e(events_frac)
@@ -49,13 +87,14 @@ def create_pdfs(events_frac, kernel_alg = 'sklearn', plot = 1, save_pdfs = 1):
     Pbzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins)
     Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
     
-    Pbzm_tau_e_bzmp_taup   = P_bzm_tau_e_bzmp_taup(Pe, \
+    Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map       = P_bzm_tau_e_bzmp_taup(Pe, \
                                                     Pn,\
                                                     Pbzm_tau_e, \
                                                     Pbzmp_taup_e,\
                                                     Pbzmp_taup_n,\
                                                     Pbzmp_taup_bzm_tau_e)
     
+    return Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P0, P1, P1_map
     
     
 def P_e(events_frac):  
@@ -705,7 +744,13 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
                                 b)
     
     #check the normalization of the 4D space - should be 1   
-    P0 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e[:,:,20,3,5],\
+    predicted_duration = 15.0
+    predicted_bzmax = -26.0
+    indt = np.min(np.where(t > predicted_duration))
+    indb = np.max(np.where(b < predicted_bzmax))
+    
+    
+    P0 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e[:,:,indb,indt,5],\
                                 t),\
                                 b)  
     
@@ -750,18 +795,20 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     #voxel = 300*250
     #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * voxel
     
+    #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * (49*49)
+    
 #==============================================================================
 #     P_bzmp_taup_bzm_tau_e2 = np.zeros((db2,db2,db2,db2,6))
 #     for j in range(db2):
 #         for k in range(db2):
 #             for i in range(6):
 #                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = P_bzmp_taup_bzm_tau_e[:,:,j,k,i] * 1/ P_bzmp_taup_bzm_tau_e[:,:,j,k,i]
-#     
-#     P0_2 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,20,3,5],\
-#                                 t),\
-#                                 b)          
-#     print(P0_2)            
 #==============================================================================
+    
+    #P0_2 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,20,3,5],\
+    #                            t),\
+    #                            b)          
+    #print(P0_2)            
     
     ############## END MESSING ABOUT WITH CODE #############
     
@@ -819,9 +866,10 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     tmin = ranges[2]
     tmax = ranges[3]
     
-    #number of data bins in each dimension (dt takes into account the reflection)
-    db = nbins[0]
-    dt = nbins[1]
+    #hack to get array size
+    X_bzmp, Y_taup, XX_bzm, YY_tau = np.mgrid[bmin:bmax:db, tmin:tmax:dt, bmin:bmax:db, tmin:tmax:dt]   
+    db2 = int(len(Y_taup[:,0,:,:]))
+    dt2 = int(len(Y_taup[0,:,:,:]))
     
     #true boundary for tau and the corresponding index in the pdf array
     taumin = 0
@@ -829,10 +877,10 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     
     #P_bzm_tau_e_bzmp_taup_e is a function of the fraction of time f throughout an event
     #currently the fit to the data considers every 5th of an event     
-    P_bzm_tau_e_bzmp_taup = np.zeros((db,dt/2,db,dt/2,6))
+    P_bzm_tau_e_bzmp_taup = np.zeros((db,dt2,db,dt2,6))
     for i in np.arange(6)*0.2:
 
-        num = np.multiply(P_bzmp_taup_bzm_tau_e2[:,:,:,:,int(i*5)], P_bzm_tau_e) * P_e
+        num = np.multiply(P_bzmp_taup_bzm_tau_e[:,:,:,:,int(i*5)], P_bzm_tau_e) * P_e
         denom = (P_bzmp_taup_e[:,:,int(i*5)] * P_e) + (P_bzmp_taup_n[:,:,int(i*5)] * P_n)
         
         P_bzm_tau_e_bzmp_taup[:,:,:,:,int(i*5)] = np.divide(num, denom)
@@ -849,7 +897,15 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
                                 b)
     #check the normalization of the 4D space - should be 1   
     # corresponds to P1 in Chen 97 paper
-    P1 = integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,20,3,5],\
+    b = XX_bzm[0,0,:,0]
+    t = YY_tau[0,0,0,dt0::]
+    
+    predicted_duration = 15.0
+    predicted_bzmax = -26.0
+    indt = np.min(np.where(t > predicted_duration))
+    indb = np.max(np.where(b < predicted_bzmax))
+    
+    P1 = integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,indb,indt,5],\
                                 t),\
                                 b)
 
@@ -864,7 +920,7 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     print('\n\n Normalization for P_bzm_tau_e_bzmp_taup: ' + str(norm_bzm_tau_e_bzmp_taup) )
     print('\n Normalization for P_bzm_tau_e_bzmp_taup plane Bzmp =-26nT, taup = 15 hrs, frac = 1.0: ' \
           + str(P1) + '\n\n')
-    
+    print('\n\n Max P1_map: ' + str(P1_map.max()) )
     
     if plotfig == 1: 
         fig, ax = plt.subplots()
@@ -877,4 +933,4 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
         fig.colorbar(c)
 
 
-    return P_bzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1    
+    return P_bzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map    
