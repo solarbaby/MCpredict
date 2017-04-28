@@ -42,19 +42,19 @@ def create_pdfs(events_frac, kernel_alg = 'sklearn', plot = 1, save_pdfs = 1):
     nbins = [db, dt]
     
     #create input PDFS
-    P_e = P_e(events_frac)
-    P_n = P_n(events_frac)
-    P_bzm_tau_e, norm_bzm_tau_e = P_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
-    P_bzmp_taup_e, norm_bzmp_taup_e = P_bzmp_taup_e(events_frac, ranges=ranges, nbins=nbins)
-    P_bzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins)
-    P_bzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
+    Pe = P_e(events_frac)
+    Pn = P_n(events_frac)
+    Pbzm_tau_e, norm_bzm_tau_e = P_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
+    Pbzmp_taup_e, norm_bzmp_taup_e = P_bzmp_taup_e(events_frac, ranges=ranges, nbins=nbins)
+    Pbzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins)
+    Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
     
-    P_bzm_tau_e_bzmp_taup   = P_bzm_tau_e_bzmp_taup(P_e, \
-                                                    P_n,\
-                                                    P_bzm_tau_e, \
-                                                    P_bzmp_taup_e,\
-                                                    P_bzmp_taup_n,\
-                                                    P_bzmp_taup_bzm_tau_e)
+    Pbzm_tau_e_bzmp_taup   = Pbzm_tau_e_bzmp_taup(Pe, \
+                                                    Pn,\
+                                                    Pbzm_tau_e, \
+                                                    Pbzmp_taup_e,\
+                                                    Pbzmp_taup_n,\
+                                                    Pbzmp_taup_bzm_tau_e)
     
     
     
@@ -746,13 +746,22 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
 #                     #            b) )
 #==============================================================================
 
-    voxel = (db*(b[1]-b[0]) * len(Y_taup[1])*(t[1]-t[0]))
-    P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * voxel
+    #voxel = (49*(b[1]-b[0]) * 49*(t[1]-t[0]))
+    #voxel = 300*250
+    #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * voxel
     
-    P0_2 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,20,3,5],\
-                                t),\
-                                b)          
-                
+#==============================================================================
+#     P_bzmp_taup_bzm_tau_e2 = np.zeros((db2,db2,db2,db2,6))
+#     for j in range(db2):
+#         for k in range(db2):
+#             for i in range(6):
+#                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = P_bzmp_taup_bzm_tau_e[:,:,j,k,i] * 1/ P_bzmp_taup_bzm_tau_e[:,:,j,k,i]
+#     
+#     P0_2 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,20,3,5],\
+#                                 t),\
+#                                 b)          
+#     print(P0_2)            
+#==============================================================================
     
     ############## END MESSING ABOUT WITH CODE #############
     
