@@ -49,7 +49,7 @@ def create_pdfs(events_frac, kernel_alg = 'sklearn', plot = 1, save_pdfs = 1):
     Pbzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins)
     Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
     
-    Pbzm_tau_e_bzmp_taup   = Pbzm_tau_e_bzmp_taup(Pe, \
+    Pbzm_tau_e_bzmp_taup   = P_bzm_tau_e_bzmp_taup(Pe, \
                                                     Pn,\
                                                     Pbzm_tau_e, \
                                                     Pbzmp_taup_e,\
