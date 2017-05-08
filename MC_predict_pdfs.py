@@ -3,6 +3,35 @@
 Created on Thu Mar 30 10:15:05 2017
 
 @author: hazel.bain
+
+    This module generates the PDFs for the
+    Chen geoeffective magnetic cloud prediction Bayesian formulation. 
+    
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
+    = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
+    
+    where
+    
+    Bzm = actual value of Bz max for a magnetic cloud
+    tau = actual duation of a magnetic cloud
+    Bzm' = fitted/estimated value of Bz max at fraction (f) of an event
+    tau' = fitted/estimated value of duration at fraction (f) of an event
+    e = geoeffective event
+    n = nongeoeffective event
+    f = fraction of an event
+    
+    The data is stored as a pickle file and should be read in as:
+    
+        events_frac = pickle.load(open("events_frac.p","rb"))
+    
+    The top level create_pdfs function generates all the input PDFs
+    and returns the posterior PDF P((Bzm, tau) n e|Bzm', tau' ; f) along with
+    some other diagnostic variables. 
+    
+    Due to a relatively small smaple of geoeffective events, kernel density estimation
+    is used to smooth the data and generate a non parametric PDFs.
+
+
 """
 
 
@@ -22,10 +51,10 @@ def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
                 ew = 2, nw = 0.5):
 
     """
-    Create the PDFs the probability for the
+    Create the PDFs for the
     Chen geoeffective magnetic cloud prediction Bayesian formulation. 
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -103,7 +132,7 @@ def P_e(events_frac):
     Determine the prior PDF P(e) for input into the following Chen geoeffective 
     magnetic cloud prediction Bayesian formulation
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where c_j can be e or n
@@ -144,7 +173,7 @@ def P_n(events_frac):
     Determine the prior PDF P(n) for input into the following Chen geoeffective 
     magnetic cloud prediction Bayesian formulation
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where c_j can be e or n
@@ -187,7 +216,7 @@ def P_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     Determine the prior PDF P(Bzm, tau|e), the probability of geoeffective event with observered bzm and tau
     for input into the following Chen geoeffective magnetic cloud prediction Bayesian formulation
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -318,7 +347,7 @@ def P_bzmp_taup_e(events_frac, kernel_alg = 'scipy_stats', \
     input into the following Chen geoeffective magnetic cloud prediction 
     Bayesian formulation.  This PDF contributes to the Bayesian "evidence".
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -463,7 +492,7 @@ def P_bzmp_taup_n(events_frac, kernel_alg = 'scipy_stats', \
     input into the following Chen geoeffective magnetic cloud prediction 
     Bayesian formulation. This PDF contributes to the Bayesian "evidence".
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -613,7 +642,7 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     Chen geoeffective magnetic cloud prediction Bayesian formulation. This is 
     the bayesian likelihood PDF, relating the model to the data.  
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -825,7 +854,7 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     Chen geoeffective magnetic cloud prediction Bayesian formulation. This is 
     the bayesian posterior PDF.
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+   P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
