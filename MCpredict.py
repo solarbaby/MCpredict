@@ -29,7 +29,7 @@ Created on Fri Feb 17 09:29:08 2017
 
 
  The original version of this code is from Jim Chen and Nick Arge
- and is called DOACE_hr.pro. This version is the python translation of
+ and is called DOACE_hr.pro. This version is adapted from the
  IDL code written by Michele Cash of DOACE.pro modifed to 
  run in near real-time, to read in data from the SWPC database,
  and to make the code more readable by removing goto statements
