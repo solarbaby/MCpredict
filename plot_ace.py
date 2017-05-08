@@ -3,6 +3,9 @@
 Created on Tue Feb 14 10:38:48 2017
 
 @author: hazel.bain
+
+Plotting routines for ACE_MAG_1m and ACE_SWEPAM_1M data
+
 """
 
 from read_database import get_data

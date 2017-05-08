@@ -3,6 +3,9 @@
 Created on Mon Feb 13 11:30:38 2017
 
 @author: hazel.bain
+
+Routines for reading in solar wind data from the database or csv file 
+
 """
 
 import numpy as np

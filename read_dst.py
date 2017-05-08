@@ -3,6 +3,12 @@
 Created on Tue Feb 14 13:36:40 2017
 
 @author: hazel.bain
+
+Reads in hourly DST data from txt file to either a pandas dataframe or
+a structured numpy data array.
+
+Use read_dst_df as default
+
 """
 
 import numpy as np
@@ -13,7 +19,12 @@ import numpy.lib.recfunctions
 
 def read_dst_df(path = 'C:/Users/hazel.bain/Documents/MC_predict/pyMCpredict/MCpredict/.spyproject/'):
     """
-    Reads in hourly data from txt file to pandas dataframe
+    Reads in hourly DST data from txt file to pandas dataframe
+    
+    inputs:
+        
+    path: string
+        path to working directory
     
     """
     
@@ -32,7 +43,12 @@ def read_dst(tstart, tend, path = 'C:/Users/hazel.bain/Documents/MC_predict/pyMC
 
     
     """
-    Reads in hourly data from txt file
+    Reads in hourly DST data from txt file
+    
+    inputs:
+        
+    path: string
+        path to working directory
     
     """
     

@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 
+
 import numpy as np
 from datetime import datetime
 from datetime import timedelta
 
-def read_richardson_icme_list():
+def read_richardson_icme_list(indir = 'C:/Users/hazel.bain/Documents/MC_predict/pyMCpredict/MCpredict/.spyproject/'):
  
     """
     Reads in Richardson and Cane's ICME list
+    
+    inputs: 
+        
+    indir: working directory path
 
     """
 
-    indir = 'C:/Users/hazel.bain/Documents/MC_predict/pyMCpredict/MCpredict/.spyproject/'
+    #indir = 'C:/Users/hazel.bain/Documents/MC_predict/pyMCpredict/MCpredict/.spyproject/'
     file = 'Richardson_and_Cane_ICME_list.csv'
 
     #Richardson and Cane spreedsheet column names and format
