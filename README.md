@@ -3,6 +3,15 @@
 Repository contains code for running the Chen magnetic cloud prediction model. See reference Papers: Chen et al. 1996, 1997, 2012
 Arge et al. 2002
 
+http://adsabs.harvard.edu/abs/1996GeoRL..23..625C
+
+http://adsabs.harvard.edu/abs/1997JGR...10214701C
+
+http://adsabs.harvard.edu/abs/2002stma.conf..393A
+
+http://adsabs.harvard.edu/abs/2012SpWea..10.4005C
+
+
 ## __Modules__
 
 ### MCpredict.py
