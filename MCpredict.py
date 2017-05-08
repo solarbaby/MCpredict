@@ -6,6 +6,28 @@ Created on Fri Feb 17 09:29:08 2017
 
  Chen_MC_Prediction.pro
 
+ This module contains functions to read in either real time or historical 
+ solar wind data and determine geoeffective and non geoeffective "events" 
+ present in the magnetic field data. An event is defined to be > 120 minutes 
+ long and with start and end times determined when Bz component of the magentic
+ field changes sign. 
+ 
+ A sinusoid is fitted to the Bz component to predict the event Bz maximum 
+ (or minimum) value and the event duration, therefore giving some predictive 
+ diagnostic of whether of not we expect the event to be geoeffective.
+ 
+ When applied to historical data, classification of the geoeffectiveness of the events is 
+ determined by comparison with the Dst value during that event. If Dst < -80 
+ the event is considered to be geoeffective. If the Dst is > -80 then the event
+ is considered to be non geoeffective. Events occuring in the wake of geoeffective
+ events, where the Dst is still recovering are classed as ambigous. 
+ 
+ The top level function Chen_MC_Prediction is called to run the model either to
+ real-time data or to a historical dataset e.g.
+ 
+ data, events, events_frac = Chen_MC_Prediction(start_date, end_date, dst_data, pdf)
+
+
  The original version of this code is from Jim Chen and Nick Arge
  and is called DOACE_hr.pro. This version is the python translation of
  IDL code written by Michele Cash of DOACE.pro modifed to 
@@ -35,6 +57,22 @@ def Chen_MC_Prediction(sdate, edate, dst_data, pdf, smooth_num = 25, pdf = pdf, 
                        plotting = 1, plt_outfile = 'mcpredict.pdf',\
                        plt_outpath = 'C:/Users/hazel.bain/Documents/MC_predict/pyMCpredict/MCpredict/richardson_mcpredict_plots/',\
                        line = [], dst_thresh = -80):
+
+"""
+ This function read in either real time or historical 
+ solar wind data and determine geoeffective and non geoeffective "events" 
+ present in the magnetic field data. An event is defined to be > 120 minutes 
+ long and with start and end times determined when Bz component of the magentic
+ field changes sign. Classification of the geoeffectiveness of the events is 
+ determined by comparison with the Dst value during that event. If Dst < -80 
+ the event is considered to be geoeffective. If the Dst is > -80 then the event
+ is considered to be non geoeffective. Events occuring in the wake of geoeffective
+ events, where the Dst is still recovering are classed as ambigous. 
+
+
+"""
+
+
     
     #running in real_time mode
     if real_time == 1:
