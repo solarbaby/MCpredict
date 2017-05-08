@@ -49,28 +49,68 @@ import pandas as pd
 from datetime import datetime
 from datetime import timedelta
 
-def Chen_MC_Prediction(sdate, edate, dst_data, pdf, smooth_num = 25, pdf = pdf, resultsdir='', \
+def Chen_MC_Prediction(sdate, edate, dst_data, pdf, smooth_num = 25, resultsdir='', \
                        real_time = 0, spacecraft = 'ace',\
                        plotting = 1, plt_outfile = 'mcpredict.pdf',\
                        plt_outpath = 'C:/Users/hazel.bain/Documents/MC_predict/pyMCpredict/MCpredict/richardson_mcpredict_plots/',\
                        line = [], dst_thresh = -80):
 
-"""
- This function read in either real time or historical 
- solar wind data and determine geoeffective and non geoeffective "events" 
- present in the magnetic field data. An event is defined to be > 120 minutes 
- long and with start and end times determined when Bz component of the magentic
- field changes sign. Classification of the geoeffectiveness of the events is 
- determined by comparison with the Dst value during that event. If Dst < -80 
- the event is considered to be geoeffective. If the Dst is > -80 then the event
- is considered to be non geoeffective. Events occuring in the wake of geoeffective
- events, where the Dst is still recovering are classed as ambigous. 
-
-
-"""
-
-
+ """
+     This function reads in either real time or historical 
+     solar wind data and determine geoeffective and non geoeffective "events" 
+     present in the magnetic field data. An event is defined to be > 120 minutes 
+     long and with start and end times determined when Bz component of the magentic
+     field changes sign. Classification of the geoeffectiveness of the events is 
+     determined by comparison with the Dst value during that event. If Dst < -80 
+     the event is considered to be geoeffective. If the Dst is > -80 then the event
+     is considered to be non geoeffective. Events occuring in the wake of geoeffective
+     events, where the Dst is still recovering are classed as ambigous. 
     
+     inputs
+     ------
+     
+     sdate - string 
+         start time, format "%Y-%m-%d"
+     edate - string 
+         start time, format "%Y-%m-%d"
+     dst_data - dataframe
+         dst hourly data
+     pdf - data array
+         PDF relating Bzm and tau to Bzm' and tau' - see MC_predict_pdfs.py
+     smooth_num - int
+         temporal smoothing parameter, default = 25
+     resultsdir - string
+         path to results directory
+     real_time - int
+         set to 1 to use real time data
+     spacecraft - string
+         which spacecraft to get the data from "ace" or "dscvr"
+     plotting - int
+         set to 1 to output plots
+     plt_outfile - string
+         plot file name default mcpredict.pdf
+     plt_outpath - string
+         path to plot file directory 
+     line - array of datatime objects
+         times of vertical lines to overplot on data
+     dst_thresh - int 
+         threshold of dst to define geoeffective event
+
+
+    outputs
+    -------
+    
+    data - data array
+        contains smoothed solar wind and plasma data from sdate to edate
+        (note this is not split into individual events)
+    events - pandas data frame
+        each row contains the characteristics for a single event
+    events_frac - pandas dataframe
+        each row contains the characteristics for a fraction of each event
+
+
+"""
+
     #running in real_time mode
     if real_time == 1:
         print("todo: real-time data required - determine dates for last 24 hours")
@@ -193,6 +233,35 @@ def Chen_MC_Prediction(sdate, edate, dst_data, pdf, smooth_num = 25, pdf = pdf, 
 
 def create_event_dataframe(data, dst_data, t_frac = 5):
 
+    """
+    Create two dataframes containing the characteristics for 
+    each solar wind magnetic field event
+    
+    inputs
+    ------
+    
+    data - data array
+        contains solar wind and plasma data for time period under study
+        (note this is not split into events)
+    dst_data - dataframe
+        contains hourly dst data to use as a classifier to determine whether the
+        event is geoeffective or non geoeffective and recored the max/min value
+    t_frac - int
+        number of fractions to split an event into - using 5 for development 
+        purposes but should be larger
+        
+
+    outputs
+    -------
+    
+    events - pandas data frame
+        each row contains the characteristics for a single event
+    events_frac - pandas dataframe
+        each row contains the characteristics for a fraction of each event
+
+    """
+    
+    
     #start and end times for each event
     #evt_times, evt_indices = find_event_times(data)
     evt_indices = np.transpose(np.array([data['istart'].drop_duplicates().values[1::], \
@@ -449,6 +518,32 @@ def mcpredict_plot(data, events_frac, dst_data, line= [], bars = [], plot_fit = 
     return None
 
 def dst_geo_tag(events, dst_data, dst_thresh = -80, dst_dur_thresh = 2.0):
+    
+    """"
+    Add tag/column to events dataframes to indicate the geoeffectiveness of the
+    events
+    
+    inputs
+    ------
+    
+    events - pandas data frame
+        each row contains the characteristics for a single event
+    dst_data - dataframe
+        contains hourly dst data to use as a classifier to determine whether the
+        event is geoeffective or non geoeffective and recored the max/min value
+    dst_thresh - int 
+         threshold of dst to define geoeffective event        
+    dst_dur_thresh - float 
+         event is considered geoeffictive if dst < dst_thresh for more than 
+         dst_dur_thresh hours 
+         
+    outputs
+    -------
+    events - pandas data frame
+        each row contains the characteristics for a single event
+    
+    """"
+    
     
     #add min Dst value and geoeffective tag for each event
     dstmin = pd.DataFrame({'dst':[]})
@@ -777,6 +872,11 @@ def value_increasing(value_current, value_max):
     
     
 def validation_stats(data, istart, iend, outdir=''):
+    
+    """
+    print out some validation stats --- not sure this works yet!!
+    
+    """
     
     duration = (iend-istart)
     
