@@ -38,9 +38,6 @@ Created on Fri Feb 17 09:29:08 2017
  Reference Papers: Chen et al. 1996, 1997, 2012
                    Arge et al. 2002
 
- INPUTS
- sdate = start date in the format '2011-09-09'
- edate = end date in the format '2011-09-10'
 
 
 """
