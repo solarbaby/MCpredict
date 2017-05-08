@@ -28,6 +28,8 @@ Created on Thu Mar 30 10:15:05 2017
     and returns the posterior PDF P((Bzm, tau) n e|Bzm', tau' ; f) along with
     some other diagnostic variables. 
     
+        Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P0, P1, P1_map = create_pdfs(events_frac, kernel_alg = 'scipy_stats')
+    
     Due to a relatively small smaple of geoeffective events, kernel density estimation
     is used to smooth the data and generate a non parametric PDFs.
 
