@@ -118,14 +118,16 @@ def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
     Pbzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins)
     Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
     
-    Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map       = P_bzm_tau_e_bzmp_taup(Pe, \
+    Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map = P_bzm_tau_e_bzmp_taup(Pe, \
                                                     Pn,\
                                                     Pbzm_tau_e, \
                                                     Pbzmp_taup_e,\
                                                     Pbzmp_taup_n,\
-                                                    Pbzmp_taup_bzm_tau_e)
+                                                    Pbzmp_taup_bzm_tau_e, \
+                                                    ranges = ranges, nbins = nbins)
     
     return Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P0, P1, P1_map
+    
     
     
 def P_e(events_frac):  
@@ -165,6 +167,8 @@ def P_e(events_frac):
     n_events = n_nongeoeff_events + n_geoeff_events
     
     P_e = n_geoeff_events / n_events
+    
+    print('\n\n P_e: ' + str(P_e) + '\n\n')
     
     return P_e
 
@@ -206,6 +210,8 @@ def P_n(events_frac):
     n_events = n_nongeoeff_events + n_geoeff_events
     
     P_n = n_nongeoeff_events / n_events
+
+    print('\n\n P_n: ' + str(P_n) + '\n\n')
 
     return P_n
 
@@ -847,7 +853,8 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
 
 
 def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
-                P_bzmp_taup_bzm_tau_e, plotfig = 0):  
+                P_bzmp_taup_bzm_tau_e, ranges = [-150, 150, -250, 250], \
+                nbins = [50j, 100j], plotfig = 0):  
     
     """
     Determine the posterior PDF P((Bzm, tau) n e |Bzm', tau' ; f), the probability 
@@ -897,10 +904,16 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     tmin = ranges[2]
     tmax = ranges[3]
     
+    #number of data bins in each dimension (dt takes into account the reflection)
+    db = nbins[0]
+    dt = nbins[1]
+    
     #hack to get array size
-    X_bzmp, Y_taup, XX_bzm, YY_tau = np.mgrid[bmin:bmax:db, tmin:tmax:dt, bmin:bmax:db, tmin:tmax:dt]   
+    X_bzmp, Y_taup, XX_bzm, YY_tau = np.mgrid[bmin:bmax:db, tmin:tmax:dt, bmin:bmax:db, tmin:tmax:dt] 
+    dt0 = int(len(Y_taup[1])/2.)
     db2 = int(len(Y_taup[:,0,:,:]))
     dt2 = int(len(Y_taup[0,:,:,:]))
+    
     
     #true boundary for tau and the corresponding index in the pdf array
     taumin = 0
@@ -908,7 +921,7 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     
     #P_bzm_tau_e_bzmp_taup_e is a function of the fraction of time f throughout an event
     #currently the fit to the data considers every 5th of an event     
-    P_bzm_tau_e_bzmp_taup = np.zeros((db,dt2,db,dt2,6))
+    P_bzm_tau_e_bzmp_taup = np.zeros((db2,db2,db2,db2,6))
     for i in np.arange(6)*0.2:
 
         num = np.multiply(P_bzmp_taup_bzm_tau_e[:,:,:,:,int(i*5)], P_bzm_tau_e) * P_e
@@ -921,6 +934,11 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
         #Ptmp_bzm_tau_e_bzmp_taup[:,:,:,:,int(i*5)] = np.divide(num, denom)
 
     #check the normalization of the 4D space 
+    bp = X_bzmp[:,0,0,0]
+    tp = Y_taup[0,dt0::,0,0]
+    b = XX_bzm[0,0,:,0]
+    t = YY_tau[0,0,0,dt0::]
+
     norm_bzm_tau_e_bzmp_taup = integrate.simps(integrate.simps(integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,:,:,5],\
                                 tp),\
                                 bp), \
@@ -941,9 +959,12 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
                                 b)
 
     #map of P1 for all planes
-    P1_map = np.zeros((db,dt/2))
-    for j in range(dt):
-        for k in range(db):
+    P1_map = np.zeros((db2,db2))
+    
+    print(P1_map.shape)
+    
+    for j in range(db2):
+        for k in range(db2):
             P1_map[j,k] = integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,j,k,5],\
                                 t),\
                                 b)
