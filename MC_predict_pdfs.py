@@ -162,8 +162,8 @@ def P_e(events_frac):
     #n_geoeff_events = len(events_frac.iloc[np.where((events_frac.frac == 1.0) & (events_frac.geoeff == 1.0))[0]])
     
     #values from Chen paper
-    n_nongeoeff_events = 8600
-    n_geoeff_events = 56
+    n_nongeoeff_events = 8600.
+    n_geoeff_events = 56.
     n_events = n_nongeoeff_events + n_geoeff_events
     
     P_e = n_geoeff_events / n_events
@@ -205,8 +205,8 @@ def P_n(events_frac):
     #n_nongeoeff_events = len(events_frac.iloc[np.where((events_frac.frac == 1.0) & (events_frac.geoeff != 1.0))[0]])
     
     #values from Chen paper
-    n_nongeoeff_events = 8600
-    n_geoeff_events = 56
+    n_nongeoeff_events = 8600.
+    n_geoeff_events = 56.
     n_events = n_nongeoeff_events + n_geoeff_events
     
     P_n = n_nongeoeff_events / n_events
