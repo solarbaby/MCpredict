@@ -50,7 +50,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
                 ranges = [-150, 150, -250, 250], nbins = [50j, 100j],\
-                ew = 2, nw = 0.5):
+                ew = 2, nw = 0.5, plotting=[0,0,0,0,0]):
 
     """
     Create the PDFs for the
@@ -83,7 +83,8 @@ def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
         defines the kernel smoothing width for the geoeffective events
     nw = float
         defines the kernel smoothing width for the nongeoeffective events    
-       
+    plotting = int array
+        indices indicate which PDFs to plot       
     
     """ 
     
@@ -113,10 +114,10 @@ def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
     #create input PDFS
     Pe = P_e(events_frac)
     Pn = P_n(events_frac)
-    Pbzm_tau_e, norm_bzm_tau_e = P_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
-    Pbzmp_taup_e, norm_bzmp_taup_e = P_bzmp_taup_e(events_frac, ranges=ranges, nbins=nbins)
-    Pbzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins)
-    Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
+    Pbzm_tau_e, norm_bzm_tau_e = P_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins, plotfig = plotting[0])
+    Pbzmp_taup_e, norm_bzmp_taup_e = P_bzmp_taup_e(events_frac, ranges=ranges, nbins=nbins, plotfig = plotting[1])
+    Pbzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins, plotfig=plotting[2])
+    Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins, plotfig=plotting[3])
     
     Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map = P_bzm_tau_e_bzmp_taup(Pe, \
                                                     Pn,\
@@ -124,7 +125,8 @@ def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
                                                     Pbzmp_taup_e,\
                                                     Pbzmp_taup_n,\
                                                     Pbzmp_taup_bzm_tau_e, \
-                                                    ranges = ranges, nbins = nbins)
+                                                    ranges = ranges, nbins = nbins,\
+                                                    plotfig = plotting[4])
     
     return Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P0, P1, P1_map
     
@@ -330,8 +332,12 @@ def P_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     print('\n\n Normalization for P_bzm_tau_e: ' + str(norm_bzm_tau_e) + '\n\n')
 
     if plotfig == 1:
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzm_tau_e), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzm_tau_e), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         ax.plot(gbzm, gtau, 'k.', markersize=4, label = 'bzm, tau, geoeff = 1')
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
@@ -399,7 +405,7 @@ def P_bzmp_taup_e(events_frac, kernel_alg = 'scipy_stats', \
         plot a figure of the distribution 
         
     
-    """ 
+    """
     #range of Bzm and tau to define PDFs 
     bmin = ranges[0]
     bmax = ranges[1]
@@ -474,9 +480,13 @@ def P_bzmp_taup_e(events_frac, kernel_alg = 'scipy_stats', \
     norm_bzmp_taup_e = integrate.simps(integrate.simps(P_bzmp_taup_e[:,:,5],Y_taup[0,dt0::]), X_bzmp[:,0])
     print('\n\n Normalization for P_bzmp_taup_e: ' + str(norm_bzmp_taup_e) + '\n\n')
 
-    if plotfig == 1:                   
+    if plotfig == 1:    
+
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')
+               
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzmp_taup_e[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzmp_taup_e[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         ax.plot(gbzmp, gtaup, 'k.', markersize=4, label = 'bzm_p, tau_p, geoeff = 1')
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
@@ -545,6 +555,7 @@ def P_bzmp_taup_n(events_frac, kernel_alg = 'scipy_stats', \
         
     
     """ 
+   
     #range of Bzm and tau to define PDFs 
     bmin = ranges[0]
     bmax = ranges[1]
@@ -625,8 +636,12 @@ def P_bzmp_taup_n(events_frac, kernel_alg = 'scipy_stats', \
     print('\n\n Normalization for P_bzmp_taup_n: ' + str(norm_bzmp_taup_n) + '\n\n')
 
     if plotfig == 1:
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzmp_taup_n[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzmp_taup_n[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         ax.plot(gbzmp_n, gtaup_n, 'k.', markersize=4, label = 'bzm_p, tau_p, geoeff = 0')
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
@@ -720,7 +735,8 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     #P_bzmp_taup_bzm_tau_e is a function of the fraction of time f throughout an event
     #currently the fit to the data considers every 5th of an event 
     Ptmp_bzmp_taup_bzm_tau_e = np.zeros((db2,dt2,db2,dt2,6))
-    for i in np.arange(6)*0.2:
+    #for i in np.arange(6)*0.2:
+    for i in [1.0]: 
         
         #extract raw data points from dataframe of estimates bzm' and tau' for 
         #fraction f throughout eoeffective events
@@ -796,8 +812,12 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
           + str(P0) + '\n\n')
                                 
     if plotfig == 1:
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzmp_taup_bzm_tau_e[:,:,20,3,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzmp_taup_bzm_tau_e[:,:,indb,indt,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         #ax.plot(gbzm, gtau, 'k.', markersize=4, c='r')
         #ax.plot(gbzm_n, gtau_n, 'k.', markersize=4, c='b')
         #ax.set_xlim([bmin, bmax])
@@ -960,8 +980,7 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
 
     #map of P1 for all planes
     P1_map = np.zeros((db2,db2))
-    
-    print(P1_map.shape)
+
     
     for j in range(db2):
         for k in range(db2):
@@ -975,8 +994,12 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     print('\n\n Max P1_map: ' + str(P1_map.max()) )
     
     if plotfig == 1: 
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzm_tau_e_bzmp_taup[:,:,20,3,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzm_tau_e_bzmp_taup[:,:,indb,indt,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         #ax.imshow(np.rot90(num[:,:,20,3]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
