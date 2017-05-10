@@ -128,9 +128,34 @@ def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
                                                     ranges = ranges, nbins = nbins,\
                                                     plotfig = plotting[4])
     
-    return Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P0, P1, P1_map
     
+    #create a dictionary to return PDFs etc
+    P_dict = {}
+    P_dict["P_e"] = Pe
+    P_dict["P_n"] = Pn
+    P_dict["P_bzm_tau_e"] = Pbzm_tau_e
+    P_dict["norm_bzm_tau_e"] = norm_bzm_tau_e
+    P_dict["P_bzmp_taup_e"] = Pbzmp_taup_e
+    P_dict["norm_bzmp_taup_e"] = norm_bzmp_taup_e
+    P_dict["P_bzmp_taup_n"] = Pbzmp_taup_n
+    P_dict["norm_bzmp_taup_n"] = norm_bzmp_taup_n
+    P_dict["P_bzmp_taup_bzm_tau_e"] = Pbzmp_taup_bzm_tau_e
+    P_dict["norm_bzmp_taup_bzm_tau_e"] = norm_bzmp_taup_bzm_tau_e
+    P_dict["P0"] = P0
+    P_dict["P_bzm_tau_e_bzmp_taup"] = Pbzm_tau_e_bzmp_taup
+    P_dict["norm_bzm_tau_e_bzmp_taup"] = norm_bzm_tau_e_bzmp_taup
+    P_dict["P1"] = P1
+    P_dict["P1_map"] = P1_map
     
+    #return Pe, Pn, \ 
+    #    Pbzm_tau_e, norm_bzm_tau_e,\
+    #    Pbzmp_taup_e, norm_bzmp_taup_e, \
+    #    Pbzmp_taup_n, norm_bzmp_taup_n, \
+    #    Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0,\
+    #    Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map
+    
+    return P_dict    
+
     
 def P_e(events_frac):  
     
