@@ -66,13 +66,13 @@ P((Bzm, tau) n e|Bzm', tau' ; f)
     
 where
     
-Bzm = actual value of Bz max for a magnetic cloud
-tau = actual duation of a magnetic cloud
-Bzm' = fitted/estimated value of Bz max at fraction (f) of an event
-tau' = fitted/estimated value of duration at fraction (f) of an event
-e = geoeffective event
-n = nongeoeffective event
-f = fraction of an event
+Bzm = actual value of Bz max for a magnetic cloud  
+tau = actual duation of a magnetic cloud  
+Bzm' = fitted/estimated value of Bz max at fraction (f) of an event  
+tau' = fitted/estimated value of duration at fraction (f) of an event  
+e = geoeffective event  
+n = nongeoeffective event  
+f = fraction of an event  
     
 The data is stored as a pickle file and should be read in as:
     
