@@ -807,7 +807,7 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
             Ptmp_bzmp_taup_bzm_tau_e[:,:,:,:,int(i*5)] = np.reshape(kernel_bzmp_taup_bzm_tau_e(positions).T, X_bzmp.shape)
  
     #set the density estimate to 0 for negative tau, and x4 for positve tau 
-    P_bzmp_taup_bzm_tau_e = Ptmp_bzmp_taup_bzm_tau_e[:,dt0::,:,dt0::,:]*4             
+    P_bzmp_taup_bzm_tau_e = Ptmp_bzmp_taup_bzm_tau_e[:,dt0::,:,dt0::,:]*4       #*50*50*2    
 
     #check the normalization of the 4D space   
     bp = X_bzmp[:,0,0,0]
@@ -855,29 +855,74 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     
     ############## FOLLOWING CODE IS MESSING ABOUT TO GET THE PLANES TO NORM TO 1 #############
 
+     P0_2 = np.zeros((50,50))
+     tmpint = np.zeros((50,50))
+     invtmpint = np.zeros((50,50))
+     P_bzmp_taup_bzm_tau_e2 = np.zeros((50,50,50,50,6))
+     #for i in np.arange(6):
+     for i in [5]:
+         for j in range(50):
+             for k in range(50):
+                 
+                 tmp = P_bzmp_taup_bzm_tau_e[:,:,j,k,i]
+                 tmpint[j,k] = integrate.simps(integrate.simps(tmp, t), b)  
+                 invtmpint[j,k] = 1/tmpint[j,k] 
+                 
+                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp * (1/tmpint[j,k])
+                 
+                 P0_2[j,k] = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,j,k,5],\
+                                t),\
+                                b)  
+
 #==============================================================================
 #     #normalize each plane
+#     x = 0
+#     
 #     P_bzmp_taup_bzm_tau_e2 = np.zeros((50,50,50,50,6))
 #     for i in np.arange(6):
 #         for j in range(50):
 #             for k in range(50):
 #                 
 #                 tmp = P_bzmp_taup_bzm_tau_e[:,:,j,k,i]
-#                 tmpsum = integrate.simps(integrate.simps(tmp, t), b)   
+#                 
+#                 #x += np.sum(P_bzmp_taup_bzm_tau_e[:,:,j,k,i])
+#                 
+#                 #tmpsum = integrate.simps(integrate.simps(tmp, t), b)   
 #                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp/tmpsum/((b[1]-b[0]) * (t[1]-t[0]))
-#                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp *(50*(b[1]-b[0]) * 50*(t[1]-t[0]))
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp *(50*(b[1]-b[0]) * 50*(t[1]-t[0]))
+#                 
+#                 #tmpsum = np.sum( P_bzmp_taup_bzm_tau_e[:,:,j,k,i])
+#                 
+#                 #tmpsum = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e[:,:,j,k,i], t), b)   
+#                 
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp* (50*(b[1]-b[0]) * 50*(t[1]-t[0])) *tmpsum 
+#                 
+#                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp *2*50*50
+#                 
+#                 #den = 0
+#                 #for m in range(50):
+#                 #    for n in range(50):
+#                 #        #den +=  (b[1]-b[0]) * (t[1]-t[0]) * P_bzmp_taup_bzm_tau_e[m,n,j,k,i]
+#                 #        den +=  P_bzmp_taup_bzm_tau_e[m,n,j,k,i]
+#                         
+#                 #tmpsum = np.sum( P_bzmp_taup_bzm_tau_e[:,:,j,k,i])
+#                 
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp / tmpsum / (50*5.05*50*6.12)
+# 
+#                 
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp*50*50*2
 #                 
 #                 #if np.isnan(integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,j,k,i], t), b)):
 #                     #print(j,k,i,integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,j,k,i],\
 #                     #            t),\
 #                     #            b) )
+# 
+#     #voxel = (49*(b[1]-b[0]) * 49*(t[1]-t[0]))
+#     #voxel = 300*250
+#     #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * voxel
+#     
+#     #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * (49*49)
 #==============================================================================
-
-    #voxel = (49*(b[1]-b[0]) * 49*(t[1]-t[0]))
-    #voxel = 300*250
-    #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * voxel
-    
-    #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * (49*49)
     
 #==============================================================================
 #     P_bzmp_taup_bzm_tau_e2 = np.zeros((db2,db2,db2,db2,6))
@@ -894,7 +939,7 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     
     ############## END MESSING ABOUT WITH CODE #############
     
-    return P_bzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0    
+    return P_bzmp_taup_bzm_tau_e2, norm_bzmp_taup_bzm_tau_e, P0    
 
 
 def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
