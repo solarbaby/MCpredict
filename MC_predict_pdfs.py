@@ -3,6 +3,37 @@
 Created on Thu Mar 30 10:15:05 2017
 
 @author: hazel.bain
+
+    This module generates the PDFs for the
+    Chen geoeffective magnetic cloud prediction Bayesian formulation. 
+    
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
+    = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
+    
+    where
+    
+    Bzm = actual value of Bz max for a magnetic cloud
+    tau = actual duation of a magnetic cloud
+    Bzm' = fitted/estimated value of Bz max at fraction (f) of an event
+    tau' = fitted/estimated value of duration at fraction (f) of an event
+    e = geoeffective event
+    n = nongeoeffective event
+    f = fraction of an event
+    
+    The data is stored as a pickle file and should be read in as:
+    
+        events_frac = pickle.load(open("events_frac.p","rb"))
+    
+    The top level create_pdfs function generates all the input PDFs
+    and returns the posterior PDF P((Bzm, tau) n e|Bzm', tau' ; f) along with
+    some other diagnostic variables. 
+    
+        Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P0, P1, P1_map = create_pdfs(events_frac, kernel_alg = 'scipy_stats')
+    
+    Due to a relatively small smaple of geoeffective events, kernel density estimation
+    is used to smooth the data and generate a non parametric PDFs.
+
+
 """
 
 
@@ -17,46 +48,114 @@ from matplotlib.font_manager import FontProperties
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def create_pdfs(events_frac, kernel_alg = 'sklearn', plot = 1, save_pdfs = 1):
+def create_pdfs(events_frac, kernel_alg = 'scipy_stats', \
+                ranges = [-150, 150, -250, 250], nbins = [50j, 100j],\
+                ew = 2, nw = 0.5, plotting=[0,0,0,0,0]):
+
+    """
+    Create the PDFs for the
+    Chen geoeffective magnetic cloud prediction Bayesian formulation. 
+    
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
+    = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
+    
+    where
+    
+    Bzm = actual value of Bz max for a magnetic cloud
+    tau = actual duation of a magnetic cloud
+    Bzm' = fitted/estimated value of Bz max at fraction (f) of an event
+    tau' = fitted/estimated value of duration at fraction (f) of an event
+    e = geoeffective event
+    n = nongeoeffective event
+    f = fraction of an event
+       
+    inputs:
+        
+    events_frac = dataframe
+        contains output variables from a fit to solar wind magnetic field data
+    kernel_alg = string
+        choose between scikit learn and scipy stats python KDE algorithms
+    ranges = 4 element array 
+        defines the axis ranges for Bzm and tau [bmin, bmax, tmin, tmax]
+    nbins = 2 elements array 
+        defines the number of bins along bzm and tau [nbins_Bzm, nbins_tau]
+    ew = float
+        defines the kernel smoothing width for the geoeffective events
+    nw = float
+        defines the kernel smoothing width for the nongeoeffective events    
+    plotting = int array
+        indices indicate which PDFs to plot       
+    
+    """ 
     
     #width of smoothing box
-    ew = 2
-    nw = 0.5
+    #ew = 2
+    #nw = 0.5
     
     
     #range of Bzm and tau to define PDFs 
     #note - tmin is negative due to requirement to reflect raw data points in 
     #the tau = 0 axis to combat boundary effects when implementing kernel density
     #estimate smoothing
-    bmin = -150
-    bmax = 150
-    tmin = -250
-    tmax = 250
+    #bmin = -150
+    #bmax = 150
+    #tmin = -250
+    #tmax = 250
     
-    ranges = [bmin, bmax, tmin, tmax]
+    #ranges = [bmin, bmax, tmin, tmax]
     
     #number of data bins in each dimension (dt takes into account the reflection)
-    db = 50j
-    dt = 100j
+    #db = 5j
+    #dt = 10j
     
-    nbins = [db, dt]
+    #nbins = [db, dt]
+    
     
     #create input PDFS
-    P_e = P_e(events_frac)
-    P_n = P_n(events_frac)
-    P_bzm_tau_e, norm_bzm_tau_e = P_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
-    P_bzmp_taup_e, norm_bzmp_taup_e = P_bzmp_taup_e(events_frac, ranges=ranges, nbins=nbins)
-    P_bzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins)
-    P_bzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins)
+    Pe = P_e(events_frac)
+    Pn = P_n(events_frac)
+    Pbzm_tau_e, norm_bzm_tau_e = P_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins, plotfig = plotting[0])
+    Pbzmp_taup_e, norm_bzmp_taup_e = P_bzmp_taup_e(events_frac, ranges=ranges, nbins=nbins, plotfig = plotting[1])
+    Pbzmp_taup_n, norm_bzmp_taup_n = P_bzmp_taup_n(events_frac, ranges=ranges, nbins=nbins, plotfig=plotting[2])
+    Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0 = P_bzmp_taup_bzm_tau_e(events_frac, ranges=ranges, nbins=nbins, plotfig=plotting[3])
     
-    P_bzm_tau_e_bzmp_taup   = P_bzm_tau_e_bzmp_taup(P_e, \
-                                                    P_n,\
-                                                    P_bzm_tau_e, \
-                                                    P_bzmp_taup_e,\
-                                                    P_bzmp_taup_n,\
-                                                    P_bzmp_taup_bzm_tau_e)
+    Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map = P_bzm_tau_e_bzmp_taup(Pe, \
+                                                    Pn,\
+                                                    Pbzm_tau_e, \
+                                                    Pbzmp_taup_e,\
+                                                    Pbzmp_taup_n,\
+                                                    Pbzmp_taup_bzm_tau_e, \
+                                                    ranges = ranges, nbins = nbins,\
+                                                    plotfig = plotting[4])
     
     
+    #create a dictionary to return PDFs etc
+    P_dict = {}
+    P_dict["P_e"] = Pe
+    P_dict["P_n"] = Pn
+    P_dict["P_bzm_tau_e"] = Pbzm_tau_e
+    P_dict["norm_bzm_tau_e"] = norm_bzm_tau_e
+    P_dict["P_bzmp_taup_e"] = Pbzmp_taup_e
+    P_dict["norm_bzmp_taup_e"] = norm_bzmp_taup_e
+    P_dict["P_bzmp_taup_n"] = Pbzmp_taup_n
+    P_dict["norm_bzmp_taup_n"] = norm_bzmp_taup_n
+    P_dict["P_bzmp_taup_bzm_tau_e"] = Pbzmp_taup_bzm_tau_e
+    P_dict["norm_bzmp_taup_bzm_tau_e"] = norm_bzmp_taup_bzm_tau_e
+    P_dict["P0"] = P0
+    P_dict["P_bzm_tau_e_bzmp_taup"] = Pbzm_tau_e_bzmp_taup
+    P_dict["norm_bzm_tau_e_bzmp_taup"] = norm_bzm_tau_e_bzmp_taup
+    P_dict["P1"] = P1
+    P_dict["P1_map"] = P1_map
+    
+    #return Pe, Pn, \ 
+    #    Pbzm_tau_e, norm_bzm_tau_e,\
+    #    Pbzmp_taup_e, norm_bzmp_taup_e, \
+    #    Pbzmp_taup_n, norm_bzmp_taup_n, \
+    #    Pbzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0,\
+    #    Pbzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map
+    
+    return P_dict    
+
     
 def P_e(events_frac):  
     
@@ -64,7 +163,7 @@ def P_e(events_frac):
     Determine the prior PDF P(e) for input into the following Chen geoeffective 
     magnetic cloud prediction Bayesian formulation
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where c_j can be e or n
@@ -90,11 +189,13 @@ def P_e(events_frac):
     #n_geoeff_events = len(events_frac.iloc[np.where((events_frac.frac == 1.0) & (events_frac.geoeff == 1.0))[0]])
     
     #values from Chen paper
-    n_nongeoeff_events = 8600
-    n_geoeff_events = 56
+    n_nongeoeff_events = 8600.
+    n_geoeff_events = 56.
     n_events = n_nongeoeff_events + n_geoeff_events
     
     P_e = n_geoeff_events / n_events
+    
+    print('\n\n P_e: ' + str(P_e) + '\n\n')
     
     return P_e
 
@@ -105,7 +206,7 @@ def P_n(events_frac):
     Determine the prior PDF P(n) for input into the following Chen geoeffective 
     magnetic cloud prediction Bayesian formulation
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where c_j can be e or n
@@ -131,11 +232,13 @@ def P_n(events_frac):
     #n_nongeoeff_events = len(events_frac.iloc[np.where((events_frac.frac == 1.0) & (events_frac.geoeff != 1.0))[0]])
     
     #values from Chen paper
-    n_nongeoeff_events = 8600
-    n_geoeff_events = 56
+    n_nongeoeff_events = 8600.
+    n_geoeff_events = 56.
     n_events = n_nongeoeff_events + n_geoeff_events
     
     P_n = n_nongeoeff_events / n_events
+
+    print('\n\n P_n: ' + str(P_n) + '\n\n')
 
     return P_n
 
@@ -148,7 +251,7 @@ def P_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     Determine the prior PDF P(Bzm, tau|e), the probability of geoeffective event with observered bzm and tau
     for input into the following Chen geoeffective magnetic cloud prediction Bayesian formulation
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -254,8 +357,12 @@ def P_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     print('\n\n Normalization for P_bzm_tau_e: ' + str(norm_bzm_tau_e) + '\n\n')
 
     if plotfig == 1:
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzm_tau_e), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzm_tau_e), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         ax.plot(gbzm, gtau, 'k.', markersize=4, label = 'bzm, tau, geoeff = 1')
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
@@ -279,7 +386,7 @@ def P_bzmp_taup_e(events_frac, kernel_alg = 'scipy_stats', \
     input into the following Chen geoeffective magnetic cloud prediction 
     Bayesian formulation.  This PDF contributes to the Bayesian "evidence".
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -323,7 +430,7 @@ def P_bzmp_taup_e(events_frac, kernel_alg = 'scipy_stats', \
         plot a figure of the distribution 
         
     
-    """ 
+    """
     #range of Bzm and tau to define PDFs 
     bmin = ranges[0]
     bmax = ranges[1]
@@ -398,9 +505,13 @@ def P_bzmp_taup_e(events_frac, kernel_alg = 'scipy_stats', \
     norm_bzmp_taup_e = integrate.simps(integrate.simps(P_bzmp_taup_e[:,:,5],Y_taup[0,dt0::]), X_bzmp[:,0])
     print('\n\n Normalization for P_bzmp_taup_e: ' + str(norm_bzmp_taup_e) + '\n\n')
 
-    if plotfig == 1:                   
+    if plotfig == 1:    
+
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')
+               
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzmp_taup_e[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzmp_taup_e[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         ax.plot(gbzmp, gtaup, 'k.', markersize=4, label = 'bzm_p, tau_p, geoeff = 1')
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
@@ -424,7 +535,7 @@ def P_bzmp_taup_n(events_frac, kernel_alg = 'scipy_stats', \
     input into the following Chen geoeffective magnetic cloud prediction 
     Bayesian formulation. This PDF contributes to the Bayesian "evidence".
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -469,6 +580,7 @@ def P_bzmp_taup_n(events_frac, kernel_alg = 'scipy_stats', \
         
     
     """ 
+   
     #range of Bzm and tau to define PDFs 
     bmin = ranges[0]
     bmax = ranges[1]
@@ -549,8 +661,12 @@ def P_bzmp_taup_n(events_frac, kernel_alg = 'scipy_stats', \
     print('\n\n Normalization for P_bzmp_taup_n: ' + str(norm_bzmp_taup_n) + '\n\n')
 
     if plotfig == 1:
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzmp_taup_n[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzmp_taup_n[:,:,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         ax.plot(gbzmp_n, gtaup_n, 'k.', markersize=4, label = 'bzm_p, tau_p, geoeff = 0')
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
@@ -574,7 +690,7 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     Chen geoeffective magnetic cloud prediction Bayesian formulation. This is 
     the bayesian likelihood PDF, relating the model to the data.  
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+    P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -644,7 +760,8 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     #P_bzmp_taup_bzm_tau_e is a function of the fraction of time f throughout an event
     #currently the fit to the data considers every 5th of an event 
     Ptmp_bzmp_taup_bzm_tau_e = np.zeros((db2,dt2,db2,dt2,6))
-    for i in np.arange(6)*0.2:
+    #for i in np.arange(6)*0.2:
+    for i in [1.0]: 
         
         #extract raw data points from dataframe of estimates bzm' and tau' for 
         #fraction f throughout eoeffective events
@@ -690,7 +807,7 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
             Ptmp_bzmp_taup_bzm_tau_e[:,:,:,:,int(i*5)] = np.reshape(kernel_bzmp_taup_bzm_tau_e(positions).T, X_bzmp.shape)
  
     #set the density estimate to 0 for negative tau, and x4 for positve tau 
-    P_bzmp_taup_bzm_tau_e = Ptmp_bzmp_taup_bzm_tau_e[:,dt0::,:,dt0::,:]*4             
+    P_bzmp_taup_bzm_tau_e = Ptmp_bzmp_taup_bzm_tau_e[:,dt0::,:,dt0::,:]*4       #*50*50*2    
 
     #check the normalization of the 4D space   
     bp = X_bzmp[:,0,0,0]
@@ -705,7 +822,13 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
                                 b)
     
     #check the normalization of the 4D space - should be 1   
-    P0 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e[:,:,20,3,5],\
+    predicted_duration = 15.0
+    predicted_bzmax = -26.0
+    indt = np.min(np.where(t > predicted_duration))
+    indb = np.max(np.where(b < predicted_bzmax))
+    
+    
+    P0 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e[:,:,indb,indt,5],\
                                 t),\
                                 b)  
     
@@ -714,8 +837,12 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
           + str(P0) + '\n\n')
                                 
     if plotfig == 1:
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzmp_taup_bzm_tau_e[:,:,20,3,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzmp_taup_bzm_tau_e[:,:,indb,indt,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         #ax.plot(gbzm, gtau, 'k.', markersize=4, c='r')
         #ax.plot(gbzm_n, gtau_n, 'k.', markersize=4, c='b')
         #ax.set_xlim([bmin, bmax])
@@ -728,39 +855,96 @@ def P_bzmp_taup_bzm_tau_e(events_frac, kernel_alg = 'scipy_stats', \
     
     ############## FOLLOWING CODE IS MESSING ABOUT TO GET THE PLANES TO NORM TO 1 #############
 
+     P0_2 = np.zeros((50,50))
+     tmpint = np.zeros((50,50))
+     invtmpint = np.zeros((50,50))
+     P_bzmp_taup_bzm_tau_e2 = np.zeros((50,50,50,50,6))
+     #for i in np.arange(6):
+     for i in [5]:
+         for j in range(50):
+             for k in range(50):
+                 
+                 tmp = P_bzmp_taup_bzm_tau_e[:,:,j,k,i]
+                 tmpint[j,k] = integrate.simps(integrate.simps(tmp, t), b)  
+                 invtmpint[j,k] = 1/tmpint[j,k] 
+                 
+                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp * (1/tmpint[j,k])
+                 
+                 P0_2[j,k] = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,j,k,5],\
+                                t),\
+                                b)  
+
 #==============================================================================
 #     #normalize each plane
+#     x = 0
+#     
 #     P_bzmp_taup_bzm_tau_e2 = np.zeros((50,50,50,50,6))
 #     for i in np.arange(6):
 #         for j in range(50):
 #             for k in range(50):
 #                 
 #                 tmp = P_bzmp_taup_bzm_tau_e[:,:,j,k,i]
-#                 tmpsum = integrate.simps(integrate.simps(tmp, t), b)   
+#                 
+#                 #x += np.sum(P_bzmp_taup_bzm_tau_e[:,:,j,k,i])
+#                 
+#                 #tmpsum = integrate.simps(integrate.simps(tmp, t), b)   
 #                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp/tmpsum/((b[1]-b[0]) * (t[1]-t[0]))
-#                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp *(50*(b[1]-b[0]) * 50*(t[1]-t[0]))
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp *(50*(b[1]-b[0]) * 50*(t[1]-t[0]))
+#                 
+#                 #tmpsum = np.sum( P_bzmp_taup_bzm_tau_e[:,:,j,k,i])
+#                 
+#                 #tmpsum = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e[:,:,j,k,i], t), b)   
+#                 
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp* (50*(b[1]-b[0]) * 50*(t[1]-t[0])) *tmpsum 
+#                 
+#                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp *2*50*50
+#                 
+#                 #den = 0
+#                 #for m in range(50):
+#                 #    for n in range(50):
+#                 #        #den +=  (b[1]-b[0]) * (t[1]-t[0]) * P_bzmp_taup_bzm_tau_e[m,n,j,k,i]
+#                 #        den +=  P_bzmp_taup_bzm_tau_e[m,n,j,k,i]
+#                         
+#                 #tmpsum = np.sum( P_bzmp_taup_bzm_tau_e[:,:,j,k,i])
+#                 
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp / tmpsum / (50*5.05*50*6.12)
+# 
+#                 
+#                 #P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = tmp*50*50*2
 #                 
 #                 #if np.isnan(integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,j,k,i], t), b)):
 #                     #print(j,k,i,integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,j,k,i],\
 #                     #            t),\
 #                     #            b) )
+# 
+#     #voxel = (49*(b[1]-b[0]) * 49*(t[1]-t[0]))
+#     #voxel = 300*250
+#     #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * voxel
+#     
+#     #P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * (49*49)
 #==============================================================================
-
-    voxel = (db*(b[1]-b[0]) * len(Y_taup[1])*(t[1]-t[0]))
-    P_bzmp_taup_bzm_tau_e2 = P_bzmp_taup_bzm_tau_e * voxel
     
-    P0_2 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,20,3,5],\
-                                t),\
-                                b)          
-                
+#==============================================================================
+#     P_bzmp_taup_bzm_tau_e2 = np.zeros((db2,db2,db2,db2,6))
+#     for j in range(db2):
+#         for k in range(db2):
+#             for i in range(6):
+#                 P_bzmp_taup_bzm_tau_e2[:,:,j,k,i] = P_bzmp_taup_bzm_tau_e[:,:,j,k,i] * 1/ P_bzmp_taup_bzm_tau_e[:,:,j,k,i]
+#==============================================================================
+    
+    #P0_2 = integrate.simps(integrate.simps(P_bzmp_taup_bzm_tau_e2[:,:,20,3,5],\
+    #                            t),\
+    #                            b)          
+    #print(P0_2)            
     
     ############## END MESSING ABOUT WITH CODE #############
     
-    return P_bzmp_taup_bzm_tau_e, norm_bzmp_taup_bzm_tau_e, P0    
+    return P_bzmp_taup_bzm_tau_e2, norm_bzmp_taup_bzm_tau_e, P0    
 
 
 def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
-                P_bzmp_taup_bzm_tau_e, plotfig = 0):  
+                P_bzmp_taup_bzm_tau_e, ranges = [-150, 150, -250, 250], \
+                nbins = [50j, 100j], plotfig = 0):  
     
     """
     Determine the posterior PDF P((Bzm, tau) n e |Bzm', tau' ; f), the probability 
@@ -769,7 +953,7 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     Chen geoeffective magnetic cloud prediction Bayesian formulation. This is 
     the bayesian posterior PDF.
     
-    P(Bzm, tau|(Bzm', tau') n e ; f) 
+   P((Bzm, tau) n e|Bzm', tau' ; f) 
     = P(Bzm, tau|(Bzm, tau) n e ; f) * P(Bzm, tau|e) * P(e) / SUM_j( P(Bzm',tau' | c_j ; f) * P(c_j))
     
     where
@@ -814,16 +998,23 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     db = nbins[0]
     dt = nbins[1]
     
+    #hack to get array size
+    X_bzmp, Y_taup, XX_bzm, YY_tau = np.mgrid[bmin:bmax:db, tmin:tmax:dt, bmin:bmax:db, tmin:tmax:dt] 
+    dt0 = int(len(Y_taup[1])/2.)
+    db2 = int(len(Y_taup[:,0,:,:]))
+    dt2 = int(len(Y_taup[0,:,:,:]))
+    
+    
     #true boundary for tau and the corresponding index in the pdf array
     taumin = 0
     #dt0 = dt/2 
     
     #P_bzm_tau_e_bzmp_taup_e is a function of the fraction of time f throughout an event
     #currently the fit to the data considers every 5th of an event     
-    P_bzm_tau_e_bzmp_taup = np.zeros((db,dt/2,db,dt/2,6))
+    P_bzm_tau_e_bzmp_taup = np.zeros((db2,db2,db2,db2,6))
     for i in np.arange(6)*0.2:
 
-        num = np.multiply(P_bzmp_taup_bzm_tau_e2[:,:,:,:,int(i*5)], P_bzm_tau_e) * P_e
+        num = np.multiply(P_bzmp_taup_bzm_tau_e[:,:,:,:,int(i*5)], P_bzm_tau_e) * P_e
         denom = (P_bzmp_taup_e[:,:,int(i*5)] * P_e) + (P_bzmp_taup_n[:,:,int(i*5)] * P_n)
         
         P_bzm_tau_e_bzmp_taup[:,:,:,:,int(i*5)] = np.divide(num, denom)
@@ -833,6 +1024,11 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
         #Ptmp_bzm_tau_e_bzmp_taup[:,:,:,:,int(i*5)] = np.divide(num, denom)
 
     #check the normalization of the 4D space 
+    bp = X_bzmp[:,0,0,0]
+    tp = Y_taup[0,dt0::,0,0]
+    b = XX_bzm[0,0,:,0]
+    t = YY_tau[0,0,0,dt0::]
+
     norm_bzm_tau_e_bzmp_taup = integrate.simps(integrate.simps(integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,:,:,5],\
                                 tp),\
                                 bp), \
@@ -840,14 +1036,24 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
                                 b)
     #check the normalization of the 4D space - should be 1   
     # corresponds to P1 in Chen 97 paper
-    P1 = integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,20,3,5],\
+    b = XX_bzm[0,0,:,0]
+    t = YY_tau[0,0,0,dt0::]
+    
+    predicted_duration = 15.0
+    predicted_bzmax = -26.0
+    indt = np.min(np.where(t > predicted_duration))
+    indb = np.max(np.where(b < predicted_bzmax))
+    
+    P1 = integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,indb,indt,5],\
                                 t),\
                                 b)
 
     #map of P1 for all planes
-    P1_map = np.zeros((db,dt/2))
-    for j in range(dt):
-        for k in range(db):
+    P1_map = np.zeros((db2,db2))
+
+    
+    for j in range(db2):
+        for k in range(db2):
             P1_map[j,k] = integrate.simps(integrate.simps(P_bzm_tau_e_bzmp_taup[:,:,j,k,5],\
                                 t),\
                                 b)
@@ -855,11 +1061,15 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
     print('\n\n Normalization for P_bzm_tau_e_bzmp_taup: ' + str(norm_bzm_tau_e_bzmp_taup) )
     print('\n Normalization for P_bzm_tau_e_bzmp_taup plane Bzmp =-26nT, taup = 15 hrs, frac = 1.0: ' \
           + str(P1) + '\n\n')
-    
+    print('\n\n Max P1_map: ' + str(P1_map.max()) )
     
     if plotfig == 1: 
+        
+        fontP = FontProperties()                #legend
+        #fontP.set_size('medium')1
+        
         fig, ax = plt.subplots()
-        c = ax.imshow(np.rot90(P_bzm_tau_e_bzmp_taup[:,:,20,3,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
+        c = ax.imshow(np.rot90(P_bzm_tau_e_bzmp_taup[:,:,indb,indt,5]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r, interpolation = 'none')
         #ax.imshow(np.rot90(num[:,:,20,3]), extent=(bmin,bmax,taumin,tmax), cmap=plt.cm.gist_earth_r)
         ax.set_xlim([bmin, bmax])
         ax.set_ylim([taumin, tmax])
@@ -868,4 +1078,4 @@ def P_bzm_tau_e_bzmp_taup(P_e, P_n, P_bzm_tau_e, P_bzmp_taup_e, P_bzmp_taup_n, \
         fig.colorbar(c)
 
 
-    return P_bzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1    
+    return P_bzm_tau_e_bzmp_taup, norm_bzm_tau_e_bzmp_taup, P1, P1_map    
